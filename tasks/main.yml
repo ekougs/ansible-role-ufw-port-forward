@@ -1,0 +1,18 @@
+---
+
+- name: Insert nat rules (IPv4 & v6)
+  blockinfile:
+    path: "{{ item }}"
+    insertbefore: BOF
+    block: |
+      *nat
+      {% for item in port_forward_settings %}
+      # Redirection {{ item.src_ip }}:{{ item.src_port }} --> {{ item.dest_ip }}:{{ item.dest_port }}
+      -A PREROUTING -j DNAT -i {{ item.src_interface }} -p tcp --dport {{ item.src_port }} --to-destination {{ item.dest_ip }}:{{ item.dest_port }}
+      -A POSTROUTING -j SNAT -p tcp -d {{ item.dest_ip }} --dport {{ item.dest_port }} --to {{ item.src_ip }}:{{ item.src_port }}
+      -A POSTROUTING -o {{ item.src_interface }} -j MASQUERADE
+      {% endfor %}
+      COMMIT
+    state: present
+  with_items: ["/etc/ufw/before.rules", "/etc/ufw/before6.rules"]
+  become: yes

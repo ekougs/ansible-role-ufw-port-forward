@@ -1,0 +1,11 @@
+---
+- hosts: init-ubuntu-server
+  roles:
+    - role: ../..
+  vars:
+    - port_forward_settings:
+        - src_interface: enp0s3
+          src_ip: 10.0.2.15
+          src_port: 80
+          dest_ip: 127.0.0.1
+          dest_port: 8080
