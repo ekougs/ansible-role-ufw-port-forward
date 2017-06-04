@@ -1,5 +1,12 @@
 ---
 
+- name: Enable forward policy
+  lineinfile:
+    path: /etc/default/ufw
+    regexp: '^DEFAULT_FORWARD_POLICY'
+    line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
+  become: yes
+
 - name: Insert nat rules (IPv4 & v6)
   blockinfile:
     path: "{{ item }}"

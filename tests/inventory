@@ -1,1 +1,1 @@
-init-ubuntu-server ansible_port=2222 ansible_host=127.0.0.1 ansible_ssh_user=ubuntu
+test-ufw-port-forward ansible_port=2222 ansible_host=127.0.0.1 ansible_ssh_user=ubuntu

@@ -1,5 +1,5 @@
 ---
-- hosts: init-ubuntu-server
+- hosts: test-ufw-port-forward
   roles:
     - role: ../..
   vars:
