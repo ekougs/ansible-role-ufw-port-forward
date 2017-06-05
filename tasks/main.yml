@@ -15,6 +15,10 @@
   become: yes
   with_items: ["net/ipv4/ip_forward", "net/ipv6/conf/default/forwarding", "net/ipv6/conf/all/forwarding"]
 
+- name: Enable route local net for IPv4
+  shell: sysctl -w net.ipv4.conf.{{ item.src_interface }}.route_localnet=1
+  with_items: "{{ port_forward_settings }}"
+
 - name: Insert nat rules (IPv4 & v6)
   blockinfile:
     path: "{{ item }}"
