@@ -10,28 +10,54 @@
 - name: Enable ip forward
   lineinfile:
     path: /etc/ufw/sysctl.conf
-    regexp: '{{ item  | regex_escape() }}'
-    line: '{{ item }}=1'
+    regexp: '{{ item | regex_escape() }}'
+    line: "{{ item }}=1"
   become: yes
-  with_items: ["net/ipv4/ip_forward", "net/ipv6/conf/default/forwarding", "net/ipv6/conf/all/forwarding"]
+  with_items: ["net/ipv4/ip_forward"]
 
-- name: Enable route local net for IPv4
-  shell: sysctl -w net.ipv4.conf.{{ item.src_interface }}.route_localnet=1
+- name: Enable ip local net route
+  lineinfile:
+    path: /etc/ufw/sysctl.conf
+    regexp: '{{ "net/ipv4/conf/" + item.src_interface + "/route_localnet" | regex_escape() }}'
+    line: "net/ipv4/conf/{{ item.src_interface }}/route_localnet=1"
+  become: yes
   with_items: "{{ port_forward_settings }}"
 
-- name: Insert nat rules (IPv4 & v6)
+- name: Allow source ports
+  ufw:
+    rule: allow
+    dest: "{{ item.src_ip }}"
+    port: "{{ item.src_port }}"
+  with_items: "{{ port_forward_settings }}"
+  become: yes
+
+- name: Allow traffic to dest ports
+  ufw:
+    rule: allow
+    direction: in
+    dest: "{{ item.dest_ip }}"
+    port: "{{ item.dest_port }}"
+  with_items: "{{ port_forward_settings }}"
+  become: yes
+
+- name: Insert nat rules (IPv4)
   blockinfile:
-    path: "{{ item }}"
+    path: /etc/ufw/before.rules
     insertbefore: BOF
     block: |
       *nat
+      :PREROUTING ACCEPT [0:0]
+      :POSTROUTING ACCEPT [0:0]
+
       {% for item in port_forward_settings %}
-      # Redirection {{ item.src_ip }}:{{ item.src_port }} --> {{ item.dest_ip }}:{{ item.dest_port }}
+      # Redirect {{ item.src_ip }}:{{ item.src_port }} --> {{ item.dest_ip }}:{{ item.dest_port }}
       -A PREROUTING -j DNAT -i {{ item.src_interface }} -p tcp --dport {{ item.src_port }} --to-destination {{ item.dest_ip }}:{{ item.dest_port }}
-      -A POSTROUTING -j SNAT -p tcp -d {{ item.dest_ip }} --dport {{ item.dest_port }} --to {{ item.src_ip }}:{{ item.src_port }}
-      -A POSTROUTING -o {{ item.src_interface }} -j MASQUERADE
+      -A POSTROUTING -j SNAT -p tcp -d {{ item.dest_ip }} --dport {{ item.dest_port }} --to-source {{ item.src_ip }}:{{ item.src_port }}
+
       {% endfor %}
       COMMIT
     state: present
-  with_items: ["/etc/ufw/before.rules", "/etc/ufw/before6.rules"]
   become: yes
+  notify:
+    - enable ufw
+    - restart ufw

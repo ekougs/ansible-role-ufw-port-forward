@@ -1,2 +1,10 @@
 ---
-# handlers file for ufw-port-forward
+
+- name: enable ufw
+  ufw:
+    state: enabled
+  become: yes
+
+- name: restart ufw
+  service: name=ufw state=restarted
+  become: yes
