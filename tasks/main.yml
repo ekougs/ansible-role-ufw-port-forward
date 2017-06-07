@@ -6,6 +6,9 @@
     regexp: '^DEFAULT_FORWARD_POLICY'
     line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
   become: yes
+  notify:
+    - enable ufw
+    - restart ufw
 
 - name: Enable ip forward
   lineinfile:
@@ -14,6 +17,9 @@
     line: "{{ item }}=1"
   become: yes
   with_items: ["net/ipv4/ip_forward"]
+  notify:
+    - enable ufw
+    - restart ufw
 
 - name: Enable ip local net route
   lineinfile:
@@ -22,6 +28,9 @@
     line: "net/ipv4/conf/{{ item.src_interface }}/route_localnet=1"
   become: yes
   with_items: "{{ port_forward_settings }}"
+  notify:
+    - enable ufw
+    - restart ufw
 
 - name: Allow source ports
   ufw:
@@ -30,6 +39,9 @@
     port: "{{ item.src_port }}"
   with_items: "{{ port_forward_settings }}"
   become: yes
+  notify:
+    - enable ufw
+    - restart ufw
 
 - name: Allow traffic to dest ports
   ufw:
@@ -39,6 +51,9 @@
     port: "{{ item.dest_port }}"
   with_items: "{{ port_forward_settings }}"
   become: yes
+  notify:
+    - enable ufw
+    - restart ufw
 
 - name: Insert nat rules (IPv4)
   blockinfile:
