@@ -3,7 +3,7 @@
   roles:
     - role: ../..
   vars:
-    - port_forward_settings:
+    - ufw_port_forward_settings:
         - src_interface: enp0s3
           src_ip: 10.0.2.15
           src_port: 80

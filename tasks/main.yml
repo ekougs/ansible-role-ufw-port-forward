@@ -27,7 +27,7 @@
     regexp: '{{ "net/ipv4/conf/" + item.src_interface + "/route_localnet" | regex_escape() }}'
     line: "net/ipv4/conf/{{ item.src_interface }}/route_localnet=1"
   become: yes
-  with_items: "{{ port_forward_settings }}"
+  with_items: "{{ ufw_port_forward_settings }}"
   notify:
     - enable ufw
     - restart ufw
@@ -37,7 +37,7 @@
     rule: allow
     dest: "{{ item.src_ip }}"
     port: "{{ item.src_port }}"
-  with_items: "{{ port_forward_settings }}"
+  with_items: "{{ ufw_port_forward_settings }}"
   become: yes
   notify:
     - enable ufw
@@ -49,7 +49,7 @@
     direction: in
     dest: "{{ item.dest_ip }}"
     port: "{{ item.dest_port }}"
-  with_items: "{{ port_forward_settings }}"
+  with_items: "{{ ufw_port_forward_settings }}"
   become: yes
   notify:
     - enable ufw
@@ -64,7 +64,7 @@
       :PREROUTING ACCEPT [0:0]
       :POSTROUTING ACCEPT [0:0]
 
-      {% for item in port_forward_settings %}
+      {% for item in ufw_port_forward_settings %}
       # Redirect {{ item.src_ip }}:{{ item.src_port }} --> {{ item.dest_ip }}:{{ item.dest_port }}
       -A PREROUTING -j DNAT -i {{ item.src_interface }} -p tcp --dport {{ item.src_port }} --to-destination {{ item.dest_ip }}:{{ item.dest_port }}
       -A POSTROUTING -j SNAT -p tcp -d {{ item.dest_ip }} --dport {{ item.dest_port }} --to-source {{ item.src_ip }}:{{ item.src_port }}
